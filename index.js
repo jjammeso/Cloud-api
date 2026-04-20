@@ -1,6 +1,6 @@
 import express from "express";
 import 'dotenv/config';
-import { connectRedis } from "./redis.js";
+import { connectRedis, client, get, set } from "./redis.js";
 import { pool } from "./db.js";
 
 await connectRedis();
@@ -32,16 +32,45 @@ app.post("/users", async (req,res) =>{
         [name, email]
     );
 
+    await client.del("users");
+
     res.json(result.rows[0]);
 })
 
 app.get("/users", async (req,res) =>{
+
+    const cached = await get("users");
+
+    if(cached){
+        console.log("Cache HIT");
+        return res.json(cached);
+    }
+
+    console.log("Cache MISS");
+
     const result = await pool.query("SELECT * FROM users");
+
+    await set("users", result.rows, 60);
+
     res.json(result.rows);
 })
 
 app.get("/products", async(req, res) =>{
 
+    const cached = await get("products");
+
+    if(cached){
+        console.log("Cache HIT");
+        return res.json(cached);
+    }
+
+    console.log("Cache MISS");
+
+    const result = await pool.query("SELECT * FROM products");
+
+    await set("products", result.rows, 60);
+
+    res.json(result.rows);
 })
 
 app.listen(PORT, ()=>console.log(`Cloud Api server is running at PORT: ${PORT}`));
