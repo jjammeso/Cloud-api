@@ -12,7 +12,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 4000;
 
 app.get("/", (req,res)=>{
-    res.send("Cloud is working");
+    res.send("Cloud is working"+ PORT);
 });
 
 app.get("/health", (req,res) =>{
